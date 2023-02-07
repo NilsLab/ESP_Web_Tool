@@ -1,0 +1,17 @@
+{
+    "name": "ESP Web Tool",
+    "keywords": "ethernet, iot, WiFi maneger",
+    "description": "ESP Web tool for Firmware update,Web Terminal,Wifi Config and FS management .",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/NilsLab/ESP_Web_Tool.git"
+    },
+    "version": "1.0",
+    "exclude": "tests",
+    "examples": "examples/*/*.ino",
+    "frameworks": "arduino",
+    "platforms": [
+        "espressif8266",
+        "espressif32"
+    ]
+}

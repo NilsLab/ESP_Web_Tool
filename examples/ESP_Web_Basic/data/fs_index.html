@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <title>ESP Web Tool</title>
+    <style>
+      html {font-family: Arial; display: inline-block; text-align: center;}
+      .content {padding: 8px;margin:0px 0px;}
+
+
+      .card { background-color: white; 
+        box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);
+        border-radius: 10px;
+        width:95%;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      
+      .pclass{ background-color: #DCDCDC; 
+               color:black;
+               height: 400px;
+               margin:5px;border-radius: 5px;
+               text-align: left;
+               font-size: 1.0rem;
+               overflow-y: scroll;
+            }
+    
+      .hsection {
+        background-color: #04456f;
+        padding-top: 1px;
+        color: white;
+      }
+
+      .list-group{
+        padding: 5px;
+        margin: auto;
+      }
+
+
+      .files-item{
+        margin: 5px;
+        padding: 5px;
+        height: 40px;
+        background-color: white;
+        box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);
+        text-align: center;
+      }
+      
+      .upload-item{
+        margin: 5px;
+        padding: 5px;
+        background-color: white;
+        box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);
+        text-align: left;
+      }
+
+      .list-group-item{
+        margin: 5px;
+        padding: 10px;
+        background-color: white;
+        box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);
+        list-style:inside decimal;
+      }
+
+      .btn{
+        float: right;
+      }
+
+      .title{
+        padding: 7px;
+        text-align: left;
+      }
+
+      .file_input{
+        padding-right: 10px;
+        margin-right: 10px;
+        text-align: right;
+      }
+      .row:after {
+  content: "";
+  display: table;
+  clear: both;
+  
+}
+
+.column {
+  float: left;
+  padding: 5px;
+  height: 25px; /* Should be removed. Only for demonstration */
+}
+
+.left{
+  width: 62%;
+}
+.right{
+  width: 32%;
+}
+
+.btn1{
+  width: 15%;
+  height: 30px;
+  margin: 4px;
+}
+
+#file-input{border:1px solid #ddd; background:#f1f1f1;padding:4.5px 20px;}
+
+</style>
+</head>
+
+<body style="margin:0px 0px;">
+  <div class="content" >
+    <div class="card" >   
+    
+      <div class="title">
+        <h2>ESP File System</h2>
+      </div>
+
+      <div class="files-item" >
+          <form method='POST' action='/update' enctype='multipart/form-data' id='upload_form'>
+            <div >
+              <input type='file' name='update' id='file' onchange='sub(this)' style="display:none"> </input>
+              <label id='file-input' for='file'>Choose Firmware file</label>
+              <input type='submit' class="btn1" value='Upload'>
+            </div>
+          </form>   
+      </div>
+      
+      <div class="pclass">
+        <br>
+        <table id="ftable" align="center"  width="80%" height="10%" cellspacing="0"> 
+          <thead class="list-group-item" style="height:40px">    
+          <th width="50">Index</th>     
+          <th width="200">File Name</th>    
+          <th width="100">File Size</th>     
+          <th width="100">Delete Button</th>   
+          </thead> 
+          <tbody >
+           <!--
+            <tr class="list-group-item" style="height:40px">
+              <td>0</td><td>Heart5.jpg</td> 		<td>10KB</td>	<td><button type="button" id="removeButton" onclick="delete_file('fine123');">Delete</button></td>
+            </tr>
+            -->
+            </tbody>  
+       </table>  
+       <!--
+        <ul class="list-group" id="flist">
+         
+        <li class="list-group-item">
+          <span class="name">File1.jpg</span>
+          <button class="btn"> Delete</button>
+        </li>
+
+        <li class="list-group-item">
+          <span class="name">File2.jpg</span>
+          <button class="btn"> Delete</button>
+        </li>
+        
+      </ul>
+      -->
+      </div>
+      <br>
+      
+      <a href="./">Home</a>
+      <a href="./ota">OTA </a> 
+       
+      <br>
+      <br>
+    </div>
+  </div>
+
+<script language="javascript" type="text/javascript">
+
+//var url = "ws://192.168.1.2:1337/";
+var url = 'ws://'+location.hostname+':1337/'
+var textinput;
+var canvas;
+var context;
+var dis;
+// This is called when the page finishes loading
+function init() {
+
+    //updatefilelist();
+    //updatefiletable();
+    textinput = document.getElementById("message");
+    // Connect to WebSocket server
+    wsConnect(url);
+}
+
+// Call this to connect to the WebSocket server
+function wsConnect(url) {
+    
+  
+    // Connect to WebSocket server
+    websocket = new WebSocket(url);
+    
+    // Assign callbacks
+    websocket.onopen = function(evt) { onOpen(evt) };
+    websocket.onclose = function(evt) { onClose(evt) };
+    websocket.onmessage = function(evt) { onMessage(evt) };
+    websocket.onerror = function(evt) { onError(evt) };
+}
+
+// Called when a WebSocket connection is established with the server
+function onOpen(evt) {
+    // Log connection state
+    console.log("Connected");
+    if(dis){
+      console.log("After Disconnect Reload page");  
+      window.location.reload();
+      dis=0;
+    }
+    console.log("Sending Getfiles")
+    getFiles();
+}
+
+function getFiles(){
+    websocket.send("getFiles");
+}
+
+// Called when the WebSocket connection is closed
+function onClose(evt) {
+
+    // Log disconnection state
+    console.log("Disconnected");
+    dis=1;
+    // Try to reconnect after a few seconds
+    setTimeout(function() { wsConnect(url) }, 2000);
+}
+
+// Called when a message is received from the server
+function onMessage(evt) {
+    console.log(evt.data);
+  try {
+      var myObj = JSON.parse(event.data);
+      var keys = Object.keys(myObj);
+      var filetable= document.getElementById("ftable");
+
+      var tableRows = filetable.getElementsByTagName('tr');
+      var rowCount = tableRows.length;
+
+      for (var x=rowCount-1; x>0; x--) {
+          filetable.removeChild(tableRows[x]);
+      }
+      for (var i = 0; i < keys.length; i++){
+          var key = keys[i];
+          console.log(myObj[key]);
+          const row = document.createElement('tr');
+          row.setAttribute("class", "list-group-item");    
+          row.setAttribute("style", "height:40px;");
+          row.innerHTML = `
+              <td>${i}</td><td>${myObj[key].fname}</td> 	
+              <td>${myObj[key].fsize} Bytes</td>	
+              <td><button type="button" id="removeButton${i}" onclick="delete_file('${myObj[key].fname}')">Delete</button></td>
+              `;
+       
+          filetable.appendChild(row);
+      }
+    } catch (error) {
+      console.log('Error: ', error.message);
+    }
+   
+}
+
+// Called when a WebSocket error occurs
+function onError(evt) {
+    console.log("ERROR: " + evt.data);
+}
+
+// Sends a message to the server (and prints it to the console)
+function doSend(message) {
+    
+  console.log("Sending: " + message);
+  websocket.send(message);
+}
+
+// Called whenever the HTML button is pressed
+function onPress() {
+ var mmssgg = document.getElementById("message").value;
+  if(mmssgg.length>0){
+    doSend(mmssgg);
+    document.getElementById("message").value="";
+  }
+}
+
+function updatefilelist() {
+  var filelist= document.getElementById("flist");
+  for (var counter = 0; counter < 10; counter++){
+      filelist.innerHTML += "<li class=\"list-group-item\"> <span class=\"name\"> File"+ counter+".jpg</span>   <span class=\"name\">"+ counter+"KB</span><button class=\"btn\"> Delete</button></li>";
+  }
+}
+
+function delete_file(file_name){
+    console.log("Sending for Delete : " + file_name);
+    websocket.send("delete_"+file_name);
+}
+
+function updatefiletable() {
+  var filetable= document.getElementById("ftable");
+  for (var counter = 0; counter < 2; counter++){
+    const row = document.createElement('tr');
+    row.setAttribute("class", "list-group-item");    
+    row.setAttribute("style", "height:40px;");
+    //style.height = '150px';
+    row.innerHTML = `
+        <td>0</td><td>File${counter}.jpg</td> 	
+        <td>${counter}KB</td>	
+        <td><button type="button" id="removeButton" onclick=location.href="/deletefile?fname=Heart${counter}.jpg">Delete</button></td>
+        `;
+  // You could also do the same for the cells and inputs
+  filetable.appendChild(row);
+  }
+}
+
+function sub(obj){
+  var fileName = obj.value.split('\\\\');
+  document.getElementById('file-input').innerHTML = '   '+ fileName[fileName.length-1];
+};
+
+// Call the init function as soon as the page loads
+window.addEventListener("load", init, false);
+
+</script>
+</body>
